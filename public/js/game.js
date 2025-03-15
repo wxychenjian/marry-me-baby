@@ -129,7 +129,7 @@ function updateRankings(rankings) {
             <div class="ml-3 flex-1">
                 <div class="font-medium text-gray-900">${player.nickname}</div>
                 <div class="text-sm text-gray-500">
-                    <span class="font-semibold">${player.score}</span>
+                    <span class="font-semibold">${player.score || 0}</span>
                     <span class="text-rose-500">次</span>
                     ${index === 0 ? '<span class="ml-2 text-yellow-500">🏆 领先</span>' : ''}
                 </div>

@@ -32,8 +32,8 @@ let gameStarted = false;
 let shakeCount = 0;
 let lastUpdate = 0;
 let lastX = 0, lastY = 0, lastZ = 0;
-// 调整摇动阈值，参考test.html但略微降低以适应游戏
-const SHAKE_THRESHOLD = 3000;
+// 调整摇动阈值，提高难度
+const SHAKE_THRESHOLD = 5000;
 const MIN_TIME = 50;
 
 let countdownTimer = null;
@@ -289,7 +289,7 @@ function updateTopPlayers(topPlayers) {
                     <span class="text-xs font-bold ${index === 0 ? 'text-yellow-600' : 'text-gray-600'}">${index + 1}</span>
                 </div>
                 <div class="text-sm font-medium">${player.nickname}</div>
-                <div class="text-xs ${index === 0 ? 'text-yellow-600' : 'text-gray-600'} font-semibold">${player.count}次</div>
+                <div class="text-xs ${index === 0 ? 'text-yellow-600' : 'text-gray-600'} font-semibold">${player.count || 0}次</div>
             </div>
         </div>
     `).join('');

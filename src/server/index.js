@@ -30,7 +30,7 @@ app.post('/api/rooms', async (req, res) => {
     rooms.set(roomId.toString(), room);
 
     // 获取当前请求的域名
-    const protocol = req.headers['x-forwarded-proto'] || req.protocol;
+    const protocol = process.env.NODE_ENV === 'production' ? 'https' : 'http';
     const host = req.headers['x-forwarded-host'] || req.get('host');
     const qrUrl = `${protocol}://${host}/mobile.html?room=${roomId}`;
     
@@ -175,7 +175,10 @@ io.on('connection', (socket) => {
                 total: playerRankings.length,
                 count: currentPlayerRanking.score,
                 diffToFirst: firstPlace.score - currentPlayerRanking.score,
-                topPlayers: playerRankings.slice(0, 3)
+                topPlayers: playerRankings.map(p => ({
+                    nickname: p.nickname,
+                    count: p.score
+                }))
             });
             
             // 发送实时排行榜到主持人
