@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="h-full overflow-hidden">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>婚礼摇一摇游戏 - PC端</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <style>
+        body {
+            background-color: #fff5f5;
+            background-image: url("data:image/svg+xml,%3Csvg width='52' height='26' viewBox='0 0 52 26' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23fbd5d5' fill-opacity='0.4'%3E%3Cpath d='M10 10c0-2.21-1.79-4-4-4-3.314 0-6-2.686-6-6h2c0 2.21 1.79 4 4 4 3.314 0 6 2.686 6 6 0 2.21 1.79 4 4 4 3.314 0 6 2.686 6 6 0 2.21 1.79 4 4 4v2c-3.314 0-6-2.686-6-6 0-2.21-1.79-4-4-4-3.314 0-6-2.686-6-6zm25.464-1.95l8.486 8.486-1.414 1.414-8.486-8.486 1.414-1.414z' /%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        @keyframes shine {
+            0% {
+                background-position: -100% 0;
+            }
+            100% {
+                background-position: 200% 0;
+            }
+        }
+
+        .shine-effect {
+            background: linear-gradient(90deg, 
+                rgba(255,255,255,0) 0%, 
+                rgba(255,255,255,0.4) 50%, 
+                rgba(255,255,255,0) 100%);
+            background-size: 200% 100%;
+            animation: shine 3s infinite;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        /* 自定义滚动条样式 */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f7f7f7;
+            border-radius: 3px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #fb7185;
+            border-radius: 3px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #f43f5e;
+        }
+    </style>
+</head>
+
+<body class="bg-rose-50 h-full overflow-hidden">
+    <div class="h-full flex flex-col">
+        <header class="flex-none py-4 px-8 bg-white/80 backdrop-blur-sm border-b border-rose-100">
+            <div class="flex justify-between items-center">
+                <h1 class="text-4xl font-bold text-center text-rose-800" style="text-shadow: 2px 2px 4px rgba(0,0,0,0.1)">
+                    <span class="bg-clip-text text-transparent bg-gradient-to-r from-rose-600 to-red-600">
+                        汪先生 & 李女士的婚礼游戏
+                    </span>
+                </h1>
+                <div class="room-id-display text-xl font-semibold text-rose-600"></div>
+            </div>
+        </header>
+
+        <!-- 游戏控制页面 -->
+        <div class="game-view flex-1 p-6 hidden">
+            <div class="h-full flex flex-col bg-white/95 backdrop-blur rounded-2xl shadow-xl">
+                <div class="flex-none bg-gradient-to-r from-rose-400 via-rose-500 to-red-400 p-6 rounded-t-2xl shadow-lg flex justify-between items-center shine-effect">
+                    <h2 class="text-3xl font-bold text-white">浪漫时刻</h2>
+                    <div class="text-white text-xl game-status">等待创建房间...</div>
+                </div>
+
+                <div class="flex-1 grid grid-cols-3 gap-6 p-6 min-h-0">
+                    <!-- 左侧：参与者列表 -->
+                    <div class="col-span-1 bg-white/90 rounded-xl shadow-lg p-6 border border-rose-100 flex flex-col min-h-0">
+                        <div class="flex-none flex justify-between items-center mb-4">
+                            <h3 class="font-bold text-rose-800 text-2xl">参与者列表</h3>
+                            <span class="bg-rose-100 text-rose-700 py-1.5 px-4 rounded-full text-base font-semibold player-count">0人</span>
+                        </div>
+
+                        <div class="flex-1 overflow-y-auto custom-scrollbar pr-2 player-list min-h-0">
+                            <!-- 参与者列表将由JavaScript动态生成 -->
+                        </div>
+                    </div>
+
+                    <!-- 中间：游戏控制 -->
+                    <div class="col-span-1 flex flex-col min-h-0">
+                        <div class="flex-1 bg-white/90 rounded-xl shadow-lg p-6 border border-rose-100 flex flex-col items-center justify-center">
+                            <div class="w-64 h-64 mb-8 p-4 bg-white rounded-2xl shadow-lg qr-code">
+                                <img src=""
+                                    alt="房间二维码"
+                                    class="w-full h-full object-cover rounded-xl">
+                            </div>
+
+                            <p class="text-gray-600 mb-8 text-center">
+                                <span class="block text-rose-700 font-semibold text-xl mb-2">邀请宾客扫码加入</span>
+                                <span class="player-count text-lg">当前已有0人加入游戏</span>
+                            </p>
+
+                            <button class="start-button w-full py-5 bg-gradient-to-r from-rose-500 via-rose-600 to-red-500 text-white text-2xl font-bold rounded-xl shadow-lg hover:from-rose-600 hover:to-red-600 focus:outline-none transition-all duration-300 shine-effect">
+                                开始游戏 (30秒)
+                            </button>
+
+                            <button class="create-room-button w-full py-4 mt-4 bg-white border-2 border-rose-400 text-rose-600 text-xl font-bold rounded-xl shadow-sm hover:bg-rose-50 focus:outline-none transition-colors duration-300">
+                                创建新房间
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 右侧：实时排行榜 -->
+                    <div class="col-span-1 bg-white/90 rounded-xl shadow-lg p-6 border border-rose-100 flex flex-col min-h-0">
+                        <h3 class="flex-none font-bold text-rose-800 text-2xl mb-4">实时排行榜</h3>
+
+                        <div class="flex-1 overflow-y-auto custom-scrollbar pr-2 min-h-0">
+                            <div class="space-y-4 rankings">
+                                <!-- 排行榜将由JavaScript动态生成 -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 游戏结果页面 -->
+        <div class="result-view flex-1 p-6 hidden">
+            <div class="h-full flex flex-col bg-white/95 backdrop-blur rounded-2xl shadow-xl">
+                <div class="flex-none bg-gradient-to-r from-rose-400 via-rose-500 to-red-400 p-6 rounded-t-2xl shadow-lg flex justify-between items-center shine-effect">
+                    <h2 class="text-3xl font-bold text-white">浪漫时刻</h2>
+                    <div class="text-white text-xl game-status">游戏已结束</div>
+                </div>
+
+                <div class="flex-1 flex flex-col p-8 min-h-0">
+                    <div class="text-center mb-10">
+                        <h3 class="text-5xl font-bold text-rose-700 mb-3">祝福时刻</h3>
+                        <p class="text-gray-600 text-xl">感谢<span class="player-count">0</span>位宾客的热情参与</p>
+                    </div>
+
+                    <div class="flex justify-center gap-8 mb-12">
+                        <!-- 亚军 -->
+                        <div class="flex flex-col items-center transform hover:scale-105 transition-transform second-place">
+                            <div class="w-24 h-24 bg-gray-100 rounded-full mb-3 overflow-hidden border-4 border-gray-300 shadow-lg">
+                                <div class="w-full h-full bg-gradient-to-r from-gray-400 to-gray-500 flex items-center justify-center text-white text-2xl font-bold player-initial">
+                                </div>
+                            </div>
+                            <div class="text-center">
+                                <div class="font-bold text-xl text-gray-700 player-name"></div>
+                                <div class="text-gray-600 player-score"></div>
+                            </div>
+                            <div class="mt-3 bg-gray-200 w-16 h-16 flex items-center justify-center rounded-lg text-gray-700 font-bold text-2xl shadow-md">
+                                2
+                            </div>
+                        </div>
+
+                        <!-- 冠军 -->
+                        <div class="flex flex-col items-center -mt-10 transform hover:scale-105 transition-transform first-place">
+                            <div class="w-32 h-32 bg-amber-100 rounded-full mb-3 overflow-hidden border-4 border-amber-400 shadow-lg shine-effect">
+                                <div class="w-full h-full bg-gradient-to-r from-amber-400 to-amber-500 flex items-center justify-center text-white text-3xl font-bold player-initial">
+                                </div>
+                            </div>
+                            <div class="text-center">
+                                <div class="font-bold text-2xl text-amber-700 player-name"></div>
+                                <div class="text-amber-600 text-lg player-score"></div>
+                            </div>
+                            <div class="mt-3 bg-gradient-to-r from-amber-400 to-amber-500 w-20 h-20 flex items-center justify-center rounded-lg text-white font-bold text-3xl shadow-lg">
+                                1
+                            </div>
+                        </div>
+
+                        <!-- 季军 -->
+                        <div class="flex flex-col items-center transform hover:scale-105 transition-transform third-place">
+                            <div class="w-24 h-24 bg-rose-100 rounded-full mb-3 overflow-hidden border-4 border-rose-300 shadow-lg">
+                                <div class="w-full h-full bg-gradient-to-r from-rose-400 to-rose-500 flex items-center justify-center text-white text-2xl font-bold player-initial">
+                                </div>
+                            </div>
+                            <div class="text-center">
+                                <div class="font-bold text-xl text-rose-700 player-name"></div>
+                                <div class="text-rose-600 player-score"></div>
+                            </div>
+                            <div class="mt-3 bg-rose-300 w-16 h-16 flex items-center justify-center rounded-lg text-white font-bold text-2xl shadow-md">
+                                3
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 其他排名 -->
+                    <div class="grid grid-cols-2 gap-6 max-w-3xl mx-auto overflow-y-auto custom-scrollbar other-rankings">
+                    </div>
+
+                    <div class="mt-12 text-center">
+                        <button class="create-room-button px-12 py-4 bg-gradient-to-r from-rose-500 via-rose-600 to-red-500 text-white text-2xl font-bold rounded-xl shadow-lg hover:from-rose-600 hover:to-red-600 focus:outline-none transition-all duration-300 shine-effect">
+                            再来一局
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/game.js"></script>
+</body>
+
+</html> 

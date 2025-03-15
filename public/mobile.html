@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>婚礼摇一摇 - 手机端</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <style>
+        body {
+            background-color: #fff5f5;
+            background-image: url("data:image/svg+xml,%3Csvg width='52' height='26' viewBox='0 0 52 26' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23fbd5d5' fill-opacity='0.4'%3E%3Cpath d='M10 10c0-2.21-1.79-4-4-4-3.314 0-6-2.686-6-6h2c0 2.21 1.79 4 4 4 3.314 0 6 2.686 6 6 0 2.21 1.79 4 4 4 3.314 0 6 2.686 6 6 0 2.21 1.79 4 4 4v2c-3.314 0-6-2.686-6-6 0-2.21-1.79-4-4-4-3.314 0-6-2.686-6-6zm25.464-1.95l8.486 8.486-1.414 1.414-8.486-8.486 1.414-1.414z' /%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+            height: 100vh;
+            overflow: hidden;
+            touch-action: none; /* 防止浏览器默认的触摸行为 */
+        }
+
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
+
+        .float-animation {
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes shine {
+            0% { background-position: -100% 0; }
+            100% { background-position: 200% 0; }
+        }
+
+        .shine-effect {
+            background: linear-gradient(90deg, 
+                rgba(255,255,255,0) 0%, 
+                rgba(255,255,255,0.4) 50%, 
+                rgba(255,255,255,0) 100%);
+            background-size: 200% 100%;
+            animation: shine 3s infinite;
+        }
+
+        .input-focus-ring {
+            @apply ring-rose-200 ring-offset-4 ring-offset-rose-50 transition duration-300;
+        }
+
+        .input-focus-ring:focus {
+            @apply ring-4 outline-none;
+        }
+
+        .join-button {
+            background-image: linear-gradient(135deg, #ff758c 0%, #ff7eb3 100%);
+        }
+
+        .join-button:active {
+            transform: translateY(2px);
+        }
+
+        .bg-gradient-pink {
+            background: linear-gradient(135deg, #fff6f9 0%, #fff9f9 100%);
+        }
+    </style>
+</head>
+
+<body class="h-full bg-rose-50">
+    <!-- 入口页面 -->
+    <div class="join-view h-full flex flex-col">
+        <div class="flex-1 flex flex-col items-center justify-center p-8">
+            <!-- 标题和图标 -->
+            <div class="text-center mb-12">
+                <div class="inline-block p-6 bg-white/90 rounded-full shadow-lg mb-6 float-animation">
+                    <svg class="w-20 h-20 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+                    </svg>
+                </div>
+                <h1 class="text-3xl font-bold text-rose-800 mb-2">
+                    汪先生 & 李女士
+                </h1>
+                <p class="text-rose-600 text-lg">邀请您参与婚礼互动游戏</p>
+            </div>
+
+            <!-- 输入表单 -->
+            <div class="w-full max-w-sm">
+                <div class="bg-white/95 backdrop-blur rounded-2xl shadow-xl p-6">
+                    <div class="mb-6">
+                        <label for="nickname" class="block text-sm font-medium text-gray-700 mb-2">
+                            请输入您的昵称
+                        </label>
+                        <input type="text" 
+                               id="nickname" 
+                               class="w-full px-4 py-3 bg-white border border-rose-100 rounded-xl text-lg input-focus-ring"
+                               placeholder="输入昵称..."
+                               maxlength="8">
+                    </div>
+                    <button class="join-button w-full py-4 text-white text-xl font-bold rounded-xl shadow-lg shine-effect transition-transform duration-150">
+                        加入游戏
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 底部提示 -->
+        <div class="flex-none pb-8 text-center text-rose-600/75 text-sm">
+            快来参与游戏哟
+        </div>
+    </div>
+
+    <!-- 游戏页面 -->
+    <div class="game-view h-full flex flex-col hidden">
+        <div class="pt-6 pb-2">
+            <div class="bg-gradient-to-r from-rose-500 to-red-500 h-1 w-full rounded-full mb-4"></div>
+            <h2 class="text-xl font-bold text-center text-gray-800">汪先生 & 李女士的婚礼</h2>
+            <p class="text-center text-gray-500 text-sm">摇一摇互动游戏</p>
+        </div>
+
+        <div class="flex-1 flex flex-col items-center justify-center p-4">
+            <div class="w-32 h-32 rounded-full mb-6 bg-white shadow-lg p-3">
+                <div class="w-full h-full rounded-full bg-gradient-to-r from-rose-200 to-red-200 flex items-center justify-center">
+                    <svg class="w-14 h-14 text-rose-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                </div>
+            </div>
+
+            <h3 class="text-xl font-semibold text-center mb-2">等待主持人开始游戏</h3>
+            <p class="text-gray-500 text-center mb-8">游戏即将开始，请做好准备</p>
+
+            <div class="w-full bg-white rounded-xl shadow-lg p-4 backdrop-blur-sm bg-opacity-90 border border-rose-100 mb-6">
+                <div class="flex justify-between items-center mb-2">
+                    <h4 class="font-medium text-gray-700">游戏规则</h4>
+                    <svg class="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                </div>
+                <p class="text-sm text-gray-600 mb-2">1. 游戏开始后，用力摇晃手机</p>
+                <p class="text-sm text-gray-600 mb-2">2. 每摇动一次计1分</p>
+                <p class="text-sm text-gray-600 mb-2">3. 在规定时间内，摇动次数最多者获胜</p>
+                <p class="text-sm text-gray-600">4. 前三名将获得精心准备的红包哟</p>
+            </div>
+
+            <div class="w-full bg-white rounded-xl shadow-lg p-4 backdrop-blur-sm bg-opacity-90 border border-rose-100">
+                <div class="flex items-center">
+                    <div class="w-12 h-12 bg-gradient-to-r from-rose-400 to-rose-500 rounded-full flex items-center justify-center text-white font-bold text-xl player-count">
+                        0
+                    </div>
+                    <div class="ml-4">
+                        <h4 class="font-medium">当前已有<span class="player-count">0</span>人加入</h4>
+                        <p class="text-xs text-gray-500">等待更多宾客加入游戏...</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="absolute bottom-6 left-0 right-0 flex justify-center">
+                <div class="text-sm text-gray-400 flex items-center gap-1">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.14 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0" />
+                    </svg>
+                    <span>已连接到游戏房间</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 游戏进行中页面 -->
+    <div class="playing-view h-full flex flex-col bg-gradient-pink hidden">
+        <div class="pt-6 pb-2">
+            <div class="bg-gradient-to-r from-pink-500 to-red-500 h-1 w-full rounded-full mb-4"></div>
+            <div class="flex justify-between items-center px-3">
+                <div>
+                    <h2 class="text-lg font-bold text-gray-800">汪先生 & 李女士</h2>
+                    <p class="text-xs text-gray-500">婚礼摇一摇</p>
+                </div>
+                <div class="flex items-center justify-center w-12 h-12 bg-pink-100 rounded-full shadow-inner">
+                    <span class="text-xl font-bold text-pink-600 countdown">30</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex-1 flex flex-col items-center justify-between p-4">
+            <div class="w-full max-w-sm">
+                <div class="bg-white rounded-xl shadow-md p-3 backdrop-blur-sm bg-opacity-80 border border-pink-100 flex items-center mb-4">
+                    <div class="w-10 h-10 bg-gradient-to-r from-pink-400 to-pink-500 rounded-full flex items-center justify-center text-white font-bold text-sm rank-number">
+                        -
+                    </div>
+                    <div class="ml-3 flex-1">
+                        <div class="text-sm font-medium rank-text">等待排名...</div>
+                        <div class="text-xs text-gray-500 rank-diff"></div>
+                    </div>
+                    <div class="bg-pink-100 rounded-lg py-1 px-2">
+                        <span class="text-sm font-semibold text-pink-700 shake-count">0</span>
+                        <span class="text-sm font-semibold text-pink-700">次</span>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3 mb-4 top-players">
+                    <!-- 前两名将由JavaScript动态生成 -->
+                </div>
+            </div>
+
+            <div class="relative w-60 h-60 flex items-center justify-center mb-6">
+                <div class="absolute inset-0 rounded-full bg-gradient-to-r from-pink-200 to-red-200 animate-pulse-custom opacity-70">
+                </div>
+                <div class="absolute inset-3 rounded-full bg-gradient-to-r from-pink-300 to-red-300 animate-pulse-custom opacity-80">
+                </div>
+                <div class="relative z-10 w-40 h-40 bg-white rounded-full shadow-lg flex items-center justify-center">
+                    <div class="text-center">
+                        <div class="text-5xl font-bold text-pink-600 shake-count">0</div>
+                        <div class="text-sm text-gray-500">次摇动</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="w-full max-w-sm bg-white rounded-xl shadow-md p-3 backdrop-blur-sm bg-opacity-90 border border-pink-100 text-center">
+                <svg class="w-12 h-12 mx-auto mb-2 text-pink-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                </svg>
+                <p class="text-sm text-gray-600 mb-2">快用力摇晃手机</p>
+                <p class="text-xs text-gray-500">游戏还剩<span class="text-pink-600 font-bold countdown">30</span>秒结束</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 游戏结果页面 -->
+    <div class="result-view h-full flex flex-col bg-gradient-pink hidden">
+        <div class="pt-6 pb-2">
+            <div class="bg-gradient-to-r from-rose-500 to-red-500 h-1 w-full rounded-full mb-4"></div>
+            <h2 class="text-xl font-bold text-center text-gray-800">游戏结束</h2>
+            <p class="text-center text-gray-500 text-sm">汪先生 & 李女士的婚礼摇一摇</p>
+        </div>
+
+        <div class="flex-1 flex flex-col items-center justify-between p-4">
+            <div class="w-full max-w-sm bg-white rounded-xl shadow-md p-4 backdrop-blur-sm bg-opacity-80 border border-rose-100 mb-4">
+                <h3 class="text-lg font-bold text-center text-rose-600 mb-3">您的分数</h3>
+                <div class="flex justify-center items-center gap-6">
+                    <div class="text-center">
+                        <div class="text-4xl font-bold text-gray-800 mb-1 final-shake-count">0</div>
+                        <div class="text-sm text-gray-500">摇动次数</div>
+                    </div>
+                    <div class="h-14 w-px bg-gray-200"></div>
+                    <div class="text-center">
+                        <div class="text-4xl font-bold text-rose-600 mb-1 final-rank">-</div>
+                        <div class="text-sm text-gray-500">最终排名</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mb-6">
+                <div class="relative flex justify-center">
+                    <!-- 前三名领奖台 -->
+                    <div class="flex items-end top-three-container">
+                        <!-- 由JavaScript动态生成前三名 -->
+                    </div>
+                </div>
+            </div>
+
+            <div class="w-full max-w-sm bg-white rounded-xl shadow-md px-4 py-3 backdrop-blur-sm bg-opacity-80 border border-rose-100 mb-8">
+                <h3 class="text-md font-semibold text-gray-700 mb-2">排行榜</h3>
+                <div class="space-y-2 max-h-44 overflow-y-auto pr-1 ranking-list">
+                    <!-- 由JavaScript动态生成排行榜 -->
+                </div>
+            </div>
+
+            <div class="w-full max-w-sm bg-white rounded-xl shadow-md p-3 backdrop-blur-sm bg-opacity-80 border border-rose-100 text-center result-message">
+                <!-- 由JavaScript动态生成结果信息 -->
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/mobile.js"></script>
+</body>
+</html> 

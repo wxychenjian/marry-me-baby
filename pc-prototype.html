@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>婚礼摇一摇游戏 - PC端</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .mockup-container {
+            display: flex;
+            overflow-x: auto;
+            padding: 20px;
+            gap: 30px;
+        }
+
+        .mockup {
+            flex: 0 0 auto;
+            width: 1000px;
+            height: 600px;
+            border: 2px dashed #f3d4d4;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+
+        body {
+            background-color: #fff5f5;
+            background-image: url("data:image/svg+xml,%3Csvg width='52' height='26' viewBox='0 0 52 26' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23fbd5d5' fill-opacity='0.4'%3E%3Cpath d='M10 10c0-2.21-1.79-4-4-4-3.314 0-6-2.686-6-6h2c0 2.21 1.79 4 4 4 3.314 0 6 2.686 6 6 0 2.21 1.79 4 4 4 3.314 0 6 2.686 6 6 0 2.21 1.79 4 4 4v2c-3.314 0-6-2.686-6-6 0-2.21-1.79-4-4-4-3.314 0-6-2.686-6-6zm25.464-1.95l8.486 8.486-1.414 1.414-8.486-8.486 1.414-1.414z' /%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+        }
+
+        @keyframes shine {
+            0% {
+                background-position: -100% 0;
+            }
+            100% {
+                background-position: 200% 0;
+            }
+        }
+
+        .shine-effect {
+            background: linear-gradient(90deg, 
+                rgba(255,255,255,0) 0%, 
+                rgba(255,255,255,0.4) 50%, 
+                rgba(255,255,255,0) 100%);
+            background-size: 200% 100%;
+            animation: shine 3s infinite;
+        }
+    </style>
+</head>
+
+<body class="bg-rose-50">
+    <div class="container mx-auto py-8">
+        <h1 class="text-4xl font-bold text-center mb-8 text-rose-800" style="text-shadow: 2px 2px 4px rgba(0,0,0,0.1)">
+            <span class="bg-clip-text text-transparent bg-gradient-to-r from-rose-600 to-red-600">
+                张先生 & 李女士的婚礼游戏
+            </span>
+        </h1>
+
+        <div class="mockup-container">
+            <!-- 游戏控制页面 -->
+            <div class="mockup bg-white/95 backdrop-blur">
+                <div class="h-full flex flex-col">
+                    <div class="bg-gradient-to-r from-rose-400 via-rose-500 to-red-400 p-6 rounded-lg shadow-lg flex justify-between items-center shine-effect">
+                        <h2 class="text-3xl font-bold text-white">浪漫时刻</h2>
+                        <div class="text-white text-xl">房间号: #88888</div>
+                    </div>
+
+                    <div class="flex-1 grid grid-cols-3 gap-6 p-6">
+                        <!-- 左侧：参与者列表 -->
+                        <div class="col-span-1 bg-white/90 rounded-lg shadow-lg p-4 border border-rose-100">
+                            <div class="flex justify-between items-center mb-4">
+                                <h3 class="font-bold text-rose-800 text-xl">参与者列表</h3>
+                                <span class="bg-rose-100 text-rose-700 py-1 px-3 rounded-full text-sm font-semibold">36人</span>
+                            </div>
+
+                            <div class="overflow-y-auto h-[400px] pr-2">
+                                <div class="space-y-3">
+                                    <div class="flex items-center p-3 hover:bg-rose-50 rounded-md transition-colors">
+                                        <div class="w-10 h-10 bg-gradient-to-r from-rose-400 to-rose-500 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-md">
+                                            L</div>
+                                        <div class="ml-3 font-medium text-gray-700">刘叔叔</div>
+                                    </div>
+                                    <div class="flex items-center p-2 hover:bg-rose-50 rounded-md">
+                                        <div
+                                            class="w-8 h-8 bg-gradient-to-r from-green-400 to-green-500 rounded-full flex items-center justify-center text-white font-bold">
+                                            W</div>
+                                        <div class="ml-2 font-medium">王阿姨</div>
+                                    </div>
+                                    <div class="flex items-center p-2 hover:bg-rose-50 rounded-md">
+                                        <div
+                                            class="w-8 h-8 bg-gradient-to-r from-purple-400 to-purple-500 rounded-full flex items-center justify-center text-white font-bold">
+                                            Z</div>
+                                        <div class="ml-2 font-medium">赵哥</div>
+                                    </div>
+                                    <!-- 更多参与者... -->
+                                    <div class="flex items-center p-2 hover:bg-rose-50 rounded-md">
+                                        <div
+                                            class="w-8 h-8 bg-gradient-to-r from-yellow-400 to-yellow-500 rounded-full flex items-center justify-center text-white font-bold">
+                                            S</div>
+                                        <div class="ml-2 font-medium">孙姐</div>
+                                    </div>
+                                    <div class="flex items-center p-2 hover:bg-rose-50 rounded-md">
+                                        <div
+                                            class="w-8 h-8 bg-gradient-to-r from-red-400 to-red-500 rounded-full flex items-center justify-center text-white font-bold">
+                                            C</div>
+                                        <div class="ml-2 font-medium">陈大哥</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 中间：游戏控制 -->
+                        <div class="col-span-1 flex flex-col gap-4">
+                            <div class="bg-white/90 rounded-lg shadow-lg p-6 border border-rose-100 flex flex-col items-center justify-center h-full">
+                                <div class="w-56 h-56 mb-8 p-3 bg-white rounded-2xl shadow-lg">
+                                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=example.com/game/88888"
+                                        alt="房间二维码"
+                                        class="w-full h-full object-cover rounded-xl">
+                                </div>
+
+                                <p class="text-gray-600 mb-8 text-center text-lg">
+                                    <span class="block text-rose-700 font-semibold mb-2">邀请宾客扫码加入</span>
+                                    当前已有36人加入游戏
+                                </p>
+
+                                <button class="w-full py-4 bg-gradient-to-r from-rose-500 via-rose-600 to-red-500 text-white text-xl font-bold rounded-lg shadow-lg hover:from-rose-600 hover:to-red-600 focus:outline-none transition-all duration-300 shine-effect">
+                                    开始游戏 (30秒)
+                                </button>
+
+                                <button class="w-full py-3 mt-4 bg-white border-2 border-rose-400 text-rose-600 font-bold rounded-lg shadow-sm hover:bg-rose-50 focus:outline-none transition-colors duration-300">
+                                    创建新房间
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- 右侧：实时排行榜 -->
+                        <div class="col-span-1 bg-white/90 rounded-lg shadow-lg p-4 border border-rose-100">
+                            <h3 class="font-bold text-rose-800 text-xl mb-4">实时排行榜</h3>
+
+                            <div class="overflow-y-auto h-[400px] pr-2">
+                                <div class="space-y-4">
+                                    <div class="bg-gradient-to-r from-amber-50 to-amber-100 p-4 rounded-lg flex items-center shadow-md">
+                                        <div class="flex-shrink-0 w-10 h-10 bg-amber-500 rounded-full flex items-center justify-center text-white font-bold text-lg shadow">
+                                            1</div>
+                                        <div class="ml-4 flex-1">
+                                            <div class="font-semibold text-lg">王阿姨</div>
+                                            <div class="text-amber-700">0次摇动</div>
+                                        </div>
+                                    </div>
+
+                                    <div
+                                        class="bg-gradient-to-r from-gray-100 to-gray-200 p-3 rounded-lg flex items-center">
+                                        <div
+                                            class="flex-shrink-0 w-8 h-8 bg-gray-500 rounded-full flex items-center justify-center text-white font-bold">
+                                            2</div>
+                                        <div class="ml-3 flex-1">
+                                            <div class="font-semibold">赵哥</div>
+                                            <div class="text-gray-700 text-sm">0次摇动</div>
+                                        </div>
+                                    </div>
+
+                                    <div
+                                        class="bg-gradient-to-r from-orange-100 to-orange-200 p-3 rounded-lg flex items-center">
+                                        <div
+                                            class="flex-shrink-0 w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center text-white font-bold">
+                                            3</div>
+                                        <div class="ml-3 flex-1">
+                                            <div class="font-semibold">陈大哥</div>
+                                            <div class="text-orange-700 text-sm">0次摇动</div>
+                                        </div>
+                                    </div>
+
+                                    <!-- 更多排名... -->
+                                    <div class="p-3 rounded-lg flex items-center border border-gray-200">
+                                        <div
+                                            class="flex-shrink-0 w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center text-white font-bold">
+                                            4</div>
+                                        <div class="ml-3 flex-1">
+                                            <div class="font-semibold">刘叔叔</div>
+                                            <div class="text-gray-700 text-sm">0次摇动</div>
+                                        </div>
+                                    </div>
+
+                                    <div class="p-3 rounded-lg flex items-center border border-gray-200">
+                                        <div
+                                            class="flex-shrink-0 w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center text-white font-bold">
+                                            5</div>
+                                        <div class="ml-3 flex-1">
+                                            <div class="font-semibold">孙姐</div>
+                                            <div class="text-gray-700 text-sm">0次摇动</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 游戏结果页面 -->
+            <div class="mockup bg-white/95 backdrop-blur">
+                <div class="h-full flex flex-col">
+                    <div class="bg-gradient-to-r from-rose-400 via-rose-500 to-red-400 p-6 rounded-lg shadow-lg flex justify-between items-center shine-effect">
+                        <h2 class="text-3xl font-bold text-white">浪漫时刻</h2>
+                        <div class="text-white text-xl">游戏已结束</div>
+                    </div>
+
+                    <div class="flex-1 p-8">
+                        <div class="text-center mb-10">
+                            <h3 class="text-4xl font-bold text-rose-700 mb-2">祝福时刻</h3>
+                            <p class="text-gray-600 text-lg">感谢36位宾客的热情参与</p>
+                        </div>
+
+                        <div class="flex justify-center gap-8 mb-12">
+                            <!-- 亚军 -->
+                            <div class="flex flex-col items-center transform hover:scale-105 transition-transform">
+                                <div class="w-24 h-24 bg-gray-100 rounded-full mb-3 overflow-hidden border-4 border-gray-300 shadow-lg">
+                                    <div class="w-full h-full bg-gradient-to-r from-gray-400 to-gray-500 flex items-center justify-center text-white text-2xl font-bold">
+                                        赵</div>
+                                </div>
+                                <div class="text-center">
+                                    <div class="font-bold text-xl text-gray-700">赵哥</div>
+                                    <div class="text-gray-600">186次</div>
+                                </div>
+                                <div class="mt-3 bg-gray-200 w-16 h-16 flex items-center justify-center rounded-lg text-gray-700 font-bold text-2xl shadow-md">
+                                    2</div>
+                            </div>
+
+                            <!-- 冠军 -->
+                            <div class="flex flex-col items-center -mt-10 transform hover:scale-105 transition-transform">
+                                <div class="w-32 h-32 bg-amber-100 rounded-full mb-3 overflow-hidden border-4 border-amber-400 shadow-lg shine-effect">
+                                    <div class="w-full h-full bg-gradient-to-r from-amber-400 to-amber-500 flex items-center justify-center text-white text-3xl font-bold">
+                                        王</div>
+                                </div>
+                                <div class="text-center">
+                                    <div class="font-bold text-2xl text-amber-700">王阿姨</div>
+                                    <div class="text-amber-600 text-lg">218次</div>
+                                </div>
+                                <div class="mt-3 bg-gradient-to-r from-amber-400 to-amber-500 w-20 h-20 flex items-center justify-center rounded-lg text-white font-bold text-3xl shadow-lg">
+                                    1</div>
+                            </div>
+
+                            <!-- 季军 -->
+                            <div class="flex flex-col items-center transform hover:scale-105 transition-transform">
+                                <div class="w-24 h-24 bg-rose-100 rounded-full mb-3 overflow-hidden border-4 border-rose-300 shadow-lg">
+                                    <div class="w-full h-full bg-gradient-to-r from-rose-400 to-rose-500 flex items-center justify-center text-white text-2xl font-bold">
+                                        陈</div>
+                                </div>
+                                <div class="text-center">
+                                    <div class="font-bold text-xl text-rose-700">陈大哥</div>
+                                    <div class="text-rose-600">165次</div>
+                                </div>
+                                <div class="mt-3 bg-rose-300 w-16 h-16 flex items-center justify-center rounded-lg text-white font-bold text-2xl shadow-md">
+                                    3</div>
+                            </div>
+                        </div>
+
+                        <!-- 其他排名 -->
+                        <div class="grid grid-cols-2 gap-6 max-w-3xl mx-auto">
+                            <div class="bg-white rounded-lg shadow-lg p-4 flex items-center border border-rose-100">
+                                <div class="flex-shrink-0 w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center font-bold text-gray-700 text-lg">
+                                    4</div>
+                                <div class="ml-4 flex-1">
+                                    <div class="font-semibold text-lg">刘叔叔</div>
+                                    <div class="text-gray-600">152次摇动</div>
+                                </div>
+                            </div>
+
+                            <div class="bg-white rounded-lg shadow p-3 flex items-center">
+                                <div
+                                    class="flex-shrink-0 w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center font-bold text-gray-700">
+                                    5</div>
+                                <div class="ml-3 flex-1">
+                                    <div class="font-semibold">孙姐</div>
+                                    <div class="text-gray-600 text-sm">143次摇动</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mt-12 text-center">
+                            <button class="px-8 py-4 bg-gradient-to-r from-rose-500 via-rose-600 to-red-500 text-white text-xl font-bold rounded-lg shadow-lg hover:from-rose-600 hover:to-red-600 focus:outline-none transition-all duration-300 shine-effect">
+                                再来一局
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>
