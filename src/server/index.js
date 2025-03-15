@@ -4,28 +4,11 @@ const { Server } = require('socket.io');
 const path = require('path');
 const QRCode = require('qrcode');
 const { v4: uuidv4 } = require('uuid');
-const os = require('os');
 
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
-// 获取本机局域网IP
-function getLocalIP() {
-    const interfaces = os.networkInterfaces();
-    for (const name of Object.keys(interfaces)) {
-        for (const iface of interfaces[name]) {
-            // 只获取IPv4地址，且不是内部地址
-            if (iface.family === 'IPv4' && !iface.internal && iface.address.startsWith('192.168')) {
-                return iface.address;
-            }
-        }
-    }
-    return '192.168.1.6'; // 如果没找到，返回已知的IP地址
-}
-
-const localIP = getLocalIP();
-console.log('服务器IP地址:', localIP); // 添加日志输出
 const PORT = 3000;
 
 // 游戏房间数据
@@ -46,8 +29,11 @@ app.post('/api/rooms', async (req, res) => {
     };
     rooms.set(roomId.toString(), room);
 
-    // 生成包含完整URL的二维码
-    const qrUrl = `http://${localIP}:${PORT}/mobile.html?room=${roomId}`;
+    // 获取当前请求的域名
+    const protocol = req.headers['x-forwarded-proto'] || req.protocol;
+    const host = req.headers['x-forwarded-host'] || req.get('host');
+    const qrUrl = `${protocol}://${host}/mobile.html?room=${roomId}`;
+    
     try {
         const qrCodeDataUrl = await QRCode.toDataURL(qrUrl);
         res.json({
@@ -217,5 +203,5 @@ io.on('connection', (socket) => {
 
 // 启动服务器
 server.listen(PORT, '0.0.0.0', () => {
-    console.log(`服务器运行在: http://${localIP}:${PORT}`);
+    console.log(`服务器运行在: http://0.0.0.0:${PORT}`);
 }); 
