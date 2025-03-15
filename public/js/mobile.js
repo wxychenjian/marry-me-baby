@@ -34,8 +34,8 @@ let lastTime = 0;
 let lastX = 0;
 let lastY = 0;
 let lastZ = 0;
-const SHAKE_THRESHOLD = 15;
-const MIN_TIME = 100;
+const SHAKE_THRESHOLD = 10;
+const MIN_TIME = 50;
 
 let countdownTimer = null;
 let syncTimer = null; // 添加同步定时器
@@ -74,52 +74,16 @@ socket.on('error', (message) => {
     alert(message);
 });
 
-// 处理加入游戏按钮点击
-joinButton.addEventListener('click', async () => {
-    console.log('点击加入游戏按钮');
-    
-    // 检查WebSocket连接状态
-    if (!socket.connected) {
-        console.error('WebSocket未连接');
-        alert('未连接到服务器，请刷新页面重试');
-        return;
-    }
-    
-    const nickname = nicknameInput.value.trim();
-    console.log('输入的昵称:', nickname);
-    
-    if (!nickname) {
-        alert('请输入昵称！');
-        return;
-    }
-    
-    // 禁用按钮防止重复点击
-    joinButton.disabled = true;
-    
-    // 创建Promise来处理加入房间的结果
-    const joinRoomPromise = new Promise((resolve, reject) => {
-        // 设置超时
-        const timeoutId = setTimeout(() => {
-            reject(new Error('加入房间超时'));
-        }, 5000);
-
-        // 监听加入房间成功事件
-        socket.once('joinedRoom', () => {
-            clearTimeout(timeoutId);
-            resolve();
-        });
-
-        // 监听错误事件
-        socket.once('error', (message) => {
-            clearTimeout(timeoutId);
-            reject(new Error(message));
-        });
-    });
-    
+// 初始化设备运动监听
+async function initDeviceMotion() {
     try {
-        // 检查设备运动权限
-        if (typeof DeviceMotionEvent !== 'undefined' && 
-            typeof DeviceMotionEvent.requestPermission === 'function') {
+        // 检查设备运动事件是否可用
+        if (typeof DeviceMotionEvent === 'undefined') {
+            throw new Error('您的设备不支持运动传感器，无法参与游戏！');
+        }
+
+        // iOS 13+ 需要请求权限
+        if (typeof DeviceMotionEvent.requestPermission === 'function') {
             console.log('iOS设备，请求运动权限');
             const permission = await DeviceMotionEvent.requestPermission();
             console.log('运动权限状态:', permission);
@@ -131,8 +95,65 @@ joinButton.addEventListener('click', async () => {
             console.log('非iOS设备，无需请求权限');
         }
 
-        // 添加设备运动监听
+        // 移除可能存在的旧监听器
+        window.removeEventListener('devicemotion', handleShake);
+        // 添加新的监听器
         window.addEventListener('devicemotion', handleShake);
+        console.log('成功添加设备运动监听器');
+        return true;
+    } catch (error) {
+        console.error('初始化设备运动失败:', error.message);
+        alert(error.message);
+        return false;
+    }
+}
+
+// 修改加入游戏按钮的点击事件处理
+joinButton.addEventListener('click', async () => {
+    console.log('点击加入游戏按钮');
+    
+    if (joinButton.disabled) return;
+    joinButton.disabled = true;
+    
+    const nickname = nicknameInput.value.trim();
+    if (!nickname) {
+        alert('请输入昵称');
+        joinButton.disabled = false;
+        return;
+    }
+    
+    if (!roomId) {
+        alert('房间ID无效');
+        joinButton.disabled = false;
+        return;
+    }
+    
+    try {
+        // 初始化设备运动监听
+        const motionInitialized = await initDeviceMotion();
+        if (!motionInitialized) {
+            throw new Error('设备运动初始化失败');
+        }
+        
+        // 创建Promise来处理加入房间的结果
+        const joinRoomPromise = new Promise((resolve, reject) => {
+            // 设置超时
+            const timeoutId = setTimeout(() => {
+                reject(new Error('加入房间超时'));
+            }, 5000);
+
+            // 监听加入房间成功事件
+            socket.once('joinedRoom', () => {
+                clearTimeout(timeoutId);
+                resolve();
+            });
+
+            // 监听错误事件
+            socket.once('error', (message) => {
+                clearTimeout(timeoutId);
+                reject(new Error(message));
+            });
+        });
         
         // 发送加入房间请求
         console.log('发送加入房间请求');
@@ -382,7 +403,10 @@ function handleShake(event) {
     if (!gameStarted) return;
 
     const current = event.accelerationIncludingGravity;
-    if (!current) return;
+    if (!current || current.x === null || current.y === null || current.z === null) {
+        console.log('无法获取加速度数据');
+        return;
+    }
 
     const currentTime = new Date().getTime();
     const timeDiff = currentTime - lastTime;
@@ -395,8 +419,12 @@ function handleShake(event) {
 
     if (deltaX + deltaY + deltaZ > SHAKE_THRESHOLD) {
         shakeCount++;
+        // 更新所有显示摇动次数的元素
+        shakeCountElements.forEach(el => {
+            el.textContent = shakeCount;
+        });
         socket.emit('shake', { roomId, count: shakeCount });
-        console.log('摇动次数:', shakeCount);
+        console.log('摇动次数:', shakeCount, '加速度变化:', { deltaX, deltaY, deltaZ });
         lastTime = currentTime;
     }
 
