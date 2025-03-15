@@ -52,15 +52,27 @@ io.on('connection', (socket) => {
 
     // 处理主持人加入房间
     socket.on('hostJoinRoom', ({ roomId }) => {
-        console.log(`主持人加入房间 ${roomId}`);
-        const room = rooms.get(roomId.toString());
+        console.log('主持人加入房间请求:', { roomId, type: typeof roomId });
+        
+        if (!roomId) {
+            console.error('房间ID无效:', roomId);
+            socket.emit('error', '房间ID无效');
+            return;
+        }
+
+        const roomIdStr = roomId.toString();
+        console.log('尝试获取房间:', roomIdStr);
+        const room = rooms.get(roomIdStr);
+        
         if (!room) {
+            console.error('房间不存在:', roomIdStr);
             socket.emit('error', '房间不存在');
             return;
         }
 
         // 加入socket.io房间
-        socket.join(roomId.toString());
+        socket.join(roomIdStr);
+        console.log('主持人成功加入房间:', roomIdStr);
 
         // 如果房间已有玩家，立即发送更新
         const playersList = Array.from(room.players.values()).map(player => ({

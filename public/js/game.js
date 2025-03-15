@@ -26,6 +26,12 @@ async function createRoom() {
             }
         });
         const data = await response.json();
+        console.log('创建房间响应:', data);
+        
+        // 验证响应数据
+        if (!data.roomId) {
+            throw new Error('创建房间失败：无效的房间ID');
+        }
         
         // 更新二维码
         qrCodeImg.src = data.qrCode;
@@ -40,8 +46,8 @@ async function createRoom() {
             qrCode: data.qrCode
         }));
         
-        // 加入房间
-        socket.emit('hostJoinRoom', { roomId: currentRoomId });
+        // 加入房间（确保发送数字类型的房间ID）
+        socket.emit('hostJoinRoom', { roomId: parseInt(currentRoomId, 10) });
         
         // 显示游戏视图
         gameView.classList.remove('hidden');
@@ -72,11 +78,22 @@ function checkSavedRoom() {
     if (savedRoom) {
         try {
             const { roomId, qrCode } = JSON.parse(savedRoom);
+            console.log('恢复房间信息:', { roomId, qrCode });
+            
+            // 验证房间ID
+            if (!roomId) {
+                console.error('保存的房间ID无效');
+                localStorage.removeItem('gameRoom');
+                return false;
+            }
+            
             // 恢复房间状态
             currentRoomId = roomId;
             qrCodeImg.src = qrCode;
             updateRoomIdDisplay(roomId);
-            socket.emit('hostJoinRoom', { roomId });
+            
+            // 确保发送数字类型的房间ID
+            socket.emit('hostJoinRoom', { roomId: parseInt(roomId, 10) });
             
             // 显示游戏视图
             gameView.classList.remove('hidden');
