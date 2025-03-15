@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>摇一摇检测</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding-top: 50px;
+        }
+
+        #status {
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="status">未检测到摇动</div>
+
+    <script>
+        // 检查设备是否支持 DeviceMotionEvent
+        if (window.DeviceMotionEvent) {
+            // 监听设备运动事件
+            window.addEventListener('devicemotion', deviceMotionHandler, false);
+        } else {
+            // 如果设备不支持，给出提示
+            alert('您的设备不支持摇一摇功能。');
+        }
+
+        // 摇一摇阈值，可根据实际情况调整
+        var SHAKE_THRESHOLD = 4000;
+        var last_update = 0;
+        var x, y, z, lastX = 0, lastY = 0, lastZ = 0;
+
+        function deviceMotionHandler(eventData) {
+            // 获取设备加速度信息
+            var acceleration = eventData.accelerationIncludingGravity;
+            var curTime = new Date().getTime();
+
+            // 为了避免过于频繁的检测，设置一个时间间隔
+            if ((curTime - last_update) > 10) {
+                var diffTime = curTime - last_update;
+                last_update = curTime;
+
+                // 获取当前的加速度值
+                x = acceleration.x;
+                y = acceleration.y;
+                z = acceleration.z;
+
+                // 计算加速度变化速度
+                var speed = Math.abs(x + y + z - lastX - lastY - lastZ) / diffTime * 10000;
+
+                // 判断是否达到摇一摇的阈值
+                if (speed > SHAKE_THRESHOLD) {
+                    // 当检测到摇一摇时，更新状态显示
+                    document.getElementById('status').textContent = '检测到摇动！';
+                    // 可以在这里添加更多的操作，比如震动反馈、播放音效等
+                    if (navigator.vibrate) {
+                        navigator.vibrate(200);
+                    }
+                    // 短暂延迟后恢复初始状态
+                    setTimeout(() => {
+                        document.getElementById('status').textContent = '未检测到摇动';
+                    }, 2000);
+                }
+
+                // 更新上一次的加速度值
+                lastX = x;
+                lastY = y;
+                lastZ = z;
+            }
+        }
+    </script>
+</body>
+
+</html>
