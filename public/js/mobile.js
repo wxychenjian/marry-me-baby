@@ -30,11 +30,10 @@ console.log('按钮元素:', joinButton);
 // 游戏状态
 let gameStarted = false;
 let shakeCount = 0;
-let lastTime = 0;
-let lastX = 0;
-let lastY = 0;
-let lastZ = 0;
-const SHAKE_THRESHOLD = 10;
+let lastUpdate = 0;
+let lastX = 0, lastY = 0, lastZ = 0;
+// 调整摇动阈值，参考test.html但略微降低以适应游戏
+const SHAKE_THRESHOLD = 3000;
 const MIN_TIME = 50;
 
 let countdownTimer = null;
@@ -78,14 +77,14 @@ socket.on('error', (message) => {
 async function initDeviceMotion() {
     try {
         // 检查设备运动事件是否可用
-        if (typeof DeviceMotionEvent === 'undefined') {
+        if (!window.DeviceMotionEvent) {
             throw new Error('您的设备不支持运动传感器，无法参与游戏！');
         }
 
         // iOS 13+ 需要请求权限
-        if (typeof DeviceMotionEvent.requestPermission === 'function') {
+        if (window.DeviceMotionEvent && typeof window.DeviceMotionEvent.requestPermission === 'function') {
             console.log('iOS设备，请求运动权限');
-            const permission = await DeviceMotionEvent.requestPermission();
+            const permission = await window.DeviceMotionEvent.requestPermission();
             console.log('运动权限状态:', permission);
             
             if (permission !== 'granted') {
@@ -98,7 +97,7 @@ async function initDeviceMotion() {
         // 移除可能存在的旧监听器
         window.removeEventListener('devicemotion', handleShake);
         // 添加新的监听器
-        window.addEventListener('devicemotion', handleShake);
+        window.addEventListener('devicemotion', handleShake, false);
         console.log('成功添加设备运动监听器');
         return true;
     } catch (error) {
@@ -402,35 +401,48 @@ function updateResultMessage(rank) {
 function handleShake(event) {
     if (!gameStarted) return;
 
-    const current = event.accelerationIncludingGravity;
-    if (!current || current.x === null || current.y === null || current.z === null) {
+    const acceleration = event.accelerationIncludingGravity;
+    if (!acceleration || acceleration.x === null || acceleration.y === null || acceleration.z === null) {
         console.log('无法获取加速度数据');
         return;
     }
 
-    const currentTime = new Date().getTime();
-    const timeDiff = currentTime - lastTime;
+    const curTime = new Date().getTime();
+    // 设置较短的检测间隔，使游戏更流畅
+    if ((curTime - lastUpdate) > 10) {
+        const diffTime = curTime - lastUpdate;
+        lastUpdate = curTime;
 
-    if (timeDiff < MIN_TIME) return;
+        // 获取当前的加速度值
+        const x = acceleration.x;
+        const y = acceleration.y;
+        const z = acceleration.z;
 
-    const deltaX = Math.abs(current.x - lastX);
-    const deltaY = Math.abs(current.y - lastY);
-    const deltaZ = Math.abs(current.z - lastZ);
+        // 计算加速度变化速度
+        const speed = Math.abs(x + y + z - lastX - lastY - lastZ) / diffTime * 10000;
 
-    if (deltaX + deltaY + deltaZ > SHAKE_THRESHOLD) {
-        shakeCount++;
-        // 更新所有显示摇动次数的元素
-        shakeCountElements.forEach(el => {
-            el.textContent = shakeCount;
-        });
-        socket.emit('shake', { roomId, count: shakeCount });
-        console.log('摇动次数:', shakeCount, '加速度变化:', { deltaX, deltaY, deltaZ });
-        lastTime = currentTime;
+        // 判断是否达到摇一摇的阈值
+        if (speed > SHAKE_THRESHOLD) {
+            shakeCount++;
+            // 更新所有显示摇动次数的元素
+            shakeCountElements.forEach(el => {
+                el.textContent = shakeCount;
+            });
+            // 发送摇动数据到服务器
+            socket.emit('shake', { roomId, count: shakeCount });
+            console.log('摇动次数:', shakeCount, '速度:', speed.toFixed(2));
+
+            // 添加震动反馈（如果设备支持）
+            if (navigator.vibrate) {
+                navigator.vibrate(100);
+            }
+        }
+
+        // 更新上一次的加速度值
+        lastX = x;
+        lastY = y;
+        lastZ = z;
     }
-
-    lastX = current.x;
-    lastY = current.y;
-    lastZ = current.z;
 }
 
 // 阻止页面滚动
